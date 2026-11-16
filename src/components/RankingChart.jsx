@@ -126,8 +126,8 @@ export default function RankingChart({
         }
       },
       grid: {
-        left: '3%',
-        right: '12%',
+        left: '2%',
+        right: '18%',
         bottom: '3%',
         top: '3%',
         containLabel: true
@@ -165,7 +165,13 @@ export default function RankingChart({
             fontFamily: 'JetBrains Mono',
             fontSize: 11,
             fontWeight: 600,
-            formatter: (p) => formatBRL(p.value)
+            formatter: (p) => {
+              const raw = p.data.raw;
+              if (raw.isBase) {
+                return `${formatBRL(p.value)}  (Base)`;
+              }
+              return `${formatBRL(p.value)}  (${formatPercent(raw.deltaPct)})`;
+            }
           }
         }
       ]
@@ -213,7 +219,7 @@ export default function RankingChart({
       </div>
 
       {/* Legenda de Cores */}
-      <div className="flex items-center justify-end gap-4 text-xs mt-3 text-zinc-500 dark:text-zinc-400">
+      <div className="flex flex-wrap items-center justify-end gap-4 text-xs mt-3 text-zinc-500 dark:text-zinc-400">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-sm bg-blue-600"></span>
           <span>Cargo Base (Referência)</span>
@@ -221,6 +227,10 @@ export default function RankingChart({
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-sm bg-emerald-500"></span>
           <span>Maior que a Base</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-sm bg-slate-500"></span>
+          <span>Igual à Base (Paridade)</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-sm bg-rose-500"></span>

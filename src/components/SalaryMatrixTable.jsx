@@ -66,7 +66,11 @@ export default function SalaryMatrixTable({
             </span>
           </div>
 
-          <div className="flex items-center gap-4 text-zinc-600 dark:text-zinc-300">
+          <div className="flex flex-wrap items-center gap-4 text-zinc-600 dark:text-zinc-300">
+            <div>
+              <span className="text-zinc-400">Estrutura: </span>
+              <strong className="font-mono text-zinc-900 dark:text-zinc-100">4 Classes × {maxNivel} Níveis</strong>
+            </div>
             <div>
               <span className="text-zinc-400">Piso (A-1): </span>
               <strong className="font-mono text-zinc-900 dark:text-zinc-100">{formatBRL(cargoObj.piso_inicial)}</strong>
@@ -88,12 +92,14 @@ export default function SalaryMatrixTable({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead className="bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 font-semibold border-b border-zinc-200 dark:border-zinc-800">
-              <tr>
-                <th className="py-3 px-4 w-24">Nível</th>
+              <tr className="divide-x divide-zinc-200/80 dark:divide-zinc-800">
+                <th className="py-3 px-4 w-28">Nível</th>
                 {classes.map(c => (
-                  <th key={c} className="py-3 px-4 text-right">
-                    <div className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
-                      Classe {c}
+                  <th key={c} className="py-3 px-5 text-right">
+                    <div className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-900 dark:text-zinc-100">
+                      <span className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60">
+                        Classe {c}
+                      </span>
                     </div>
                   </th>
                 ))}
@@ -103,9 +109,9 @@ export default function SalaryMatrixTable({
               {matrix.map((row) => (
                 <tr 
                   key={row.nivel}
-                  className="hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors"
+                  className="divide-x divide-zinc-100 dark:divide-zinc-800/70 hover:bg-blue-50/30 dark:hover:bg-zinc-800/40 transition-colors"
                 >
-                  <td className="py-3 px-4 font-bold text-zinc-900 dark:text-zinc-100 bg-zinc-50/50 dark:bg-zinc-900/30">
+                  <td className="py-3 px-4 font-bold text-zinc-900 dark:text-zinc-100 bg-zinc-50/70 dark:bg-zinc-900/40 whitespace-nowrap">
                     Nível {row.nivel}
                   </td>
                   {classes.map(c => {
@@ -114,7 +120,7 @@ export default function SalaryMatrixTable({
                     const stepV = row.stepsV[c];
 
                     return (
-                      <td key={c} className="py-3 px-4 text-right align-top">
+                      <td key={c} className="py-3 px-5 text-right align-top">
                         {val ? (
                           <div>
                             <div className="font-bold text-zinc-900 dark:text-zinc-100 text-sm">
@@ -126,8 +132,11 @@ export default function SalaryMatrixTable({
                                   ↑ {formatPercent(stepH)}
                                 </span>
                               )}
+                              {stepH !== undefined && stepV !== undefined && (
+                                <span className="text-zinc-300 dark:text-zinc-700">•</span>
+                              )}
                               {stepV !== undefined && (
-                                <span className="text-blue-600 dark:text-blue-400 font-medium border-l border-zinc-300 dark:border-zinc-700 pl-1.5" title="Avanço sobre a classe anterior (vertical)">
+                                <span className="text-blue-600 dark:text-blue-400 font-medium" title="Avanço sobre a classe anterior (vertical)">
                                   → {formatPercent(stepV)}
                                 </span>
                               )}

@@ -78,8 +78,8 @@ export default function SideBySideCompare({
     if (scatterMode === 'parity') {
       // Modo Paridade (X = Salário Cargo 1, Y = Salário Cargo 2)
       const allVals = validPairs.flatMap(c => [c.val1, c.val2]);
-      const minVal = Math.floor(Math.min(...allVals) * 0.95);
-      const maxVal = Math.ceil(Math.max(...allVals) * 1.05);
+      const minVal = Math.max(0, Math.floor((Math.min(...allVals) * 0.92) / 1000) * 1000);
+      const maxVal = Math.ceil((Math.max(...allVals) * 1.06) / 1000) * 1000;
 
       const scatterData = validPairs.map(c => {
         const isHigher = c.val2 > c.val1;
@@ -111,7 +111,7 @@ export default function SideBySideCompare({
             return `
               <div class="p-1">
                 <div class="font-bold font-sans text-sm pb-1 mb-1 border-b border-zinc-200 dark:border-zinc-700">
-                  Referência: <span class="font-mono text-blue-500">${raw.key}</span> (${raw.classe}-${raw.nivel})
+                  Referência: <span class="font-mono text-blue-500">${raw.key}</span> (Classe ${raw.classe} • Nível ${raw.nivel})
                 </div>
                 <div class="text-xs py-0.5">
                   <span class="font-sans text-zinc-400">${c1Obj?.orgao}:</span> 
@@ -129,18 +129,18 @@ export default function SideBySideCompare({
           }
         },
         grid: {
-          left: '5%',
-          right: '5%',
-          bottom: '10%',
-          top: '8%',
-          containLabel: true
+          left: 88,
+          right: 36,
+          bottom: 52,
+          top: 28,
+          containLabel: false
         },
         xAxis: {
           type: 'value',
           name: `${c1Obj?.orgao} (R$)`,
           nameLocation: 'middle',
-          nameGap: 30,
-          nameTextStyle: { color: textColor, fontSize: 11, fontWeight: 600, fontFamily: 'DM Sans' },
+          nameGap: 32,
+          nameTextStyle: { color: textColor, fontSize: 12, fontWeight: 600, fontFamily: 'DM Sans' },
           min: minVal,
           max: maxVal,
           axisLabel: {
@@ -155,8 +155,8 @@ export default function SideBySideCompare({
           type: 'value',
           name: `${c2Obj?.orgao} (R$)`,
           nameLocation: 'middle',
-          nameGap: 45,
-          nameTextStyle: { color: textColor, fontSize: 11, fontWeight: 600, fontFamily: 'DM Sans' },
+          nameGap: 68,
+          nameTextStyle: { color: textColor, fontSize: 12, fontWeight: 600, fontFamily: 'DM Sans' },
           min: minVal,
           max: maxVal,
           axisLabel: {
@@ -323,8 +323,18 @@ export default function SideBySideCompare({
             </select>
           </div>
 
-          <div className="hidden sm:flex items-center justify-center pt-5 text-zinc-400">
-            <ArrowLeftRight className="w-4 h-4" />
+          <div className="flex items-center justify-center sm:pt-5">
+            <button
+              type="button"
+              onClick={() => {
+                setCargo1(cargo2);
+                setCargo2(cargo1);
+              }}
+              title="Inverter Cargo 1 e Cargo 2"
+              className="p-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 hover:bg-blue-50 dark:hover:bg-blue-950/50 text-zinc-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
+            >
+              <ArrowLeftRight className="w-4 h-4" />
+            </button>
           </div>
 
           <div className="w-full sm:w-auto">
@@ -505,27 +515,40 @@ export default function SideBySideCompare({
                     }`}>
                       {hasBoth ? formatDeltaBRL(c.deltaBRL) : '-'}
                     </td>
-                    <td className={`py-2 px-3 text-right font-bold ${
-                      isPositive ? 'text-emerald-600 dark:text-emerald-400' : isNegative ? 'text-rose-600 dark:text-rose-400' : 'text-zinc-400'
-                    }`}>
-                      {hasBoth ? formatPercent(c.deltaPct) : '-'}
+                    <td className="py-2 px-3 text-right">
+                      {hasBoth ? (
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                          isPositive
+                            ? 'bg-emerald-100/80 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300'
+                            : isNegative
+                              ? 'bg-rose-100/80 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300'
+                              : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'
+                        }`}>
+                          {formatPercent(c.deltaPct)}
+                        </span>
+                      ) : '-'}
                     </td>
                     <td className="py-2 px-3">
                       {hasBoth ? (
-                        <div className="w-full bg-zinc-200 dark:bg-zinc-800 h-2 rounded-full overflow-hidden flex items-center">
+                        <div className="relative w-full bg-zinc-200/80 dark:bg-zinc-800 h-2.5 rounded-full overflow-hidden flex items-center">
+                          <div className="absolute left-1/2 top-0 bottom-0 w-px bg-zinc-400 dark:bg-zinc-600 z-10" />
                           {isPositive ? (
-                            <div 
-                              className="h-full bg-emerald-500 rounded-full"
-                              style={{ width: `${Math.min(100, Math.abs(pctClamped) * 2)}%` }}
+                            <div
+                              className="h-full bg-emerald-500 rounded-r-full"
+                              style={{
+                                marginLeft: '50%',
+                                width: `${Math.min(50, Math.abs(pctClamped))}%`
+                              }}
                             />
                           ) : isNegative ? (
-                            <div 
-                              className="h-full bg-rose-500 rounded-full"
-                              style={{ width: `${Math.min(100, Math.abs(pctClamped) * 2)}%` }}
+                            <div
+                              className="h-full bg-rose-500 rounded-l-full"
+                              style={{
+                                marginLeft: `${50 - Math.min(50, Math.abs(pctClamped))}%`,
+                                width: `${Math.min(50, Math.abs(pctClamped))}%`
+                              }}
                             />
-                          ) : (
-                            <div className="w-full h-full bg-zinc-400" />
-                          )}
+                          ) : null}
                         </div>
                       ) : (
                         <span className="text-[10px] text-zinc-400 font-sans">Sem paridade</span>

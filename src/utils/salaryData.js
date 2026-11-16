@@ -14,8 +14,19 @@ export function computeSummaryMetrics(cargos, registros) {
   const pisos = a001Records.map(r => ({ cargo: r.cargo, orgao: r.orgao, valor: r.valor }));
   pisos.sort((a, b) => a.valor - b.valor);
 
-  const minPiso = pisos[0];
-  const maxPiso = pisos[pisos.length - 1];
+  const minPisoVal = pisos[0].valor;
+  const maxPisoVal = pisos[pisos.length - 1].valor;
+  const minPisoOrgaos = pisos.filter(p => p.valor === minPisoVal).map(p => p.orgao.split(' (')[0]);
+  const maxPisoOrgaos = pisos.filter(p => p.valor === maxPisoVal).map(p => p.orgao.split(' (')[0]);
+
+  const minPiso = {
+    ...pisos[0],
+    orgao: minPisoOrgaos.length > 1 ? minPisoOrgaos.join(' / ') : pisos[0].orgao
+  };
+  const maxPiso = {
+    ...pisos[pisos.length - 1],
+    orgao: maxPisoOrgaos.length > 1 ? maxPisoOrgaos.join(' / ') : pisos[pisos.length - 1].orgao
+  };
   const avgPiso = pisos.reduce((sum, p) => sum + p.valor, 0) / pisos.length;
 
   // Filtrar tetos (maior valor de cada cargo)
@@ -26,8 +37,19 @@ export function computeSummaryMetrics(cargos, registros) {
   }));
   tetos.sort((a, b) => a.valor - b.valor);
 
-  const minTeto = tetos[0];
-  const maxTeto = tetos[tetos.length - 1];
+  const minTetoVal = tetos[0].valor;
+  const maxTetoVal = tetos[tetos.length - 1].valor;
+  const minTetoOrgaos = tetos.filter(t => t.valor === minTetoVal).map(t => t.orgao.split(' (')[0]);
+  const maxTetoOrgaos = tetos.filter(t => t.valor === maxTetoVal).map(t => t.orgao.split(' (')[0]);
+
+  const minTeto = {
+    ...tetos[0],
+    orgao: minTetoOrgaos.length > 1 ? minTetoOrgaos.join(' / ') : tetos[0].orgao
+  };
+  const maxTeto = {
+    ...tetos[tetos.length - 1],
+    orgao: maxTetoOrgaos.length > 1 ? maxTetoOrgaos.join(' / ') : tetos[tetos.length - 1].orgao
+  };
   const avgTeto = tetos.reduce((sum, t) => sum + t.valor, 0) / tetos.length;
 
   // Dispersão do piso inicial: (maxPiso / minPiso - 1) * 100
@@ -85,7 +107,7 @@ export function computeSummaryMetrics(cargos, registros) {
 export function buildMatrixForCargo(cargoName, registros) {
   const cargoRecords = registros.filter(r => r.cargo === cargoName);
   const classes = ['A', 'B', 'C', 'D'];
-  const maxNivel = Math.max(...cargoRecords.map(r => r.nivel), 12);
+  const maxNivel = cargoRecords.length > 0 ? Math.max(...cargoRecords.map(r => r.nivel)) : 12;
 
   // Mapear records por chave `${classe}-${nivel}`
   const map = new Map();

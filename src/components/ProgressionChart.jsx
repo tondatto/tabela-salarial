@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import ReactECharts from 'echarts-for-react';
-import { formatBRL, formatPercent } from '../utils/formatters';
-import { LineChart, Layers, Eye, EyeOff, SlidersHorizontal } from 'lucide-react';
+import { formatBRL } from '../utils/formatters';
+import { LineChart, Layers, Eye } from 'lucide-react';
 
 const CLASSES = [
   { id: 'A', label: 'Classe A' },
@@ -17,19 +17,24 @@ const VIEW_MODES = [
   { id: 'class_final', label: 'Valor Final de cada Classe' }
 ];
 
-// Paleta de cores para os 10 cargos
-const CARGO_COLORS = [
-  '#2563eb', // Azul (Base)
+// Paleta de 10 cores distintas (sem incluir #2563eb, que é exclusiva do Cargo Base)
+const DISTINCT_PALETTE = [
   '#10b981', // Esmeralda
   '#f59e0b', // Âmbar
   '#8b5cf6', // Violeta
   '#ec4899', // Rosa
   '#06b6d4', // Ciano
-  '#14b8a6', // Teal
   '#f97316', // Laranja
-  '#6366f1', // Indigo
-  '#64748b'  // Slate
+  '#14b8a6', // Teal
+  '#a855f7', // Roxo
+  '#64748b', // Slate
+  '#ef4444'  // Coral
 ];
+
+function getCargoColor(cargoName, idx, baselineCargo) {
+  if (cargoName === baselineCargo) return '#2563eb';
+  return DISTINCT_PALETTE[idx % DISTINCT_PALETTE.length];
+}
 
 export default function ProgressionChart({
   cargos = [],
@@ -83,22 +88,22 @@ export default function ProgressionChart({
       xAxisData = Array.from({ length: 12 }, (_, i) => `Nível ${i + 1}`);
     }
 
+    const seenSignatures = new Set();
+
     const series = cargos.map((c, idx) => {
       const isVisible = visibleCargos.has(c.cargo);
       const isBase = c.cargo === baselineCargo;
-      const color = isBase ? '#2563eb' : CARGO_COLORS[(idx + 1) % CARGO_COLORS.length];
+      const color = getCargoColor(c.cargo, idx, baselineCargo);
 
       let dataPoints = [];
 
       if (viewMode === 'class_initial') {
-        // Nível 1 de cada classe
         const classes = ['A', 'B', 'C', 'D'];
         dataPoints = classes.map(cls => {
           const rec = registros.find(r => r.cargo === c.cargo && r.classe === cls && r.nivel === 1);
           return rec ? rec.valor : null;
         });
       } else if (viewMode === 'class_final') {
-        // Último nível de cada classe
         const classes = ['A', 'B', 'C', 'D'];
         dataPoints = classes.map(cls => {
           const cRecords = registros.filter(r => r.cargo === c.cargo && r.classe === cls);
@@ -125,24 +130,33 @@ export default function ProgressionChart({
         dataPoints = Array.from({ length: 12 }, (_, i) => map.get(i + 1) || null);
       }
 
+      // Detectar séries com valores idênticos para aplicar tracejado e permitir visualização de ambas
+      const signature = JSON.stringify(dataPoints);
+      const isOverlapping = isVisible && !isBase && seenSignatures.has(signature);
+      if (isVisible) {
+        seenSignatures.add(signature);
+      }
+
       return {
         name: c.orgao,
         type: 'line',
         data: isVisible ? dataPoints : [],
-        smooth: 0.25,
-        symbol: isBase ? 'circle' : 'circle',
-        symbolSize: isBase ? 8 : 6,
+        smooth: 0.2,
+        symbol: isBase ? 'circle' : isOverlapping ? 'diamond' : 'circle',
+        symbolSize: isBase ? 8 : isOverlapping ? 7 : 6,
         lineStyle: {
-          width: isBase ? 3.5 : 2,
+          width: isBase ? 3.5 : 2.2,
           color: color,
-          type: isBase ? 'solid' : 'solid'
+          type: isOverlapping ? 'dashed' : 'solid'
         },
         itemStyle: {
           color: color
         },
-        z: isBase ? 10 : 2
+        z: isBase ? 10 : isOverlapping ? 6 : 3
       };
     });
+
+    const baseOrgao = cargos.find(c => c.cargo === baselineCargo)?.orgao;
 
     return {
       tooltip: {
@@ -159,13 +173,13 @@ export default function ProgressionChart({
             .sort((a, b) => b.value - a.value);
 
           sorted.forEach(p => {
-            const isBase = p.seriesName.includes('Área Meio');
-            const fontBold = isBase ? 'font-bold' : '';
+            const isBase = p.seriesName === baseOrgao;
+            const fontBold = isBase ? 'font-bold text-blue-600 dark:text-blue-400' : '';
             html += `
               <div class="flex items-center justify-between gap-4 text-xs py-0.5">
                 <span class="flex items-center gap-1.5 ${fontBold}">
                   <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${p.color}"></span>
-                  <span class="font-sans">${p.seriesName}:</span>
+                  <span class="font-sans">${p.seriesName}${isBase ? ' (Base)' : ''}:</span>
                 </span>
                 <span class="font-mono ${fontBold}">${formatBRL(p.value)}</span>
               </div>
@@ -175,9 +189,9 @@ export default function ProgressionChart({
         }
       },
       grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '8%',
+        left: '2%',
+        right: '3%',
+        bottom: '6%',
         top: '6%',
         containLabel: true
       },
@@ -193,6 +207,8 @@ export default function ProgressionChart({
       },
       yAxis: {
         type: 'value',
+        scale: true,
+        min: (value) => Math.max(0, Math.floor((value.min * 0.94) / 1000) * 1000),
         axisLabel: {
           color: textColor,
           fontFamily: 'JetBrains Mono',
@@ -277,7 +293,7 @@ export default function ProgressionChart({
       {/* Controles de Filtro de Cargos na Legenda */}
       <div className="pt-1 flex flex-wrap items-center justify-between gap-2">
         <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-          Clique no órgão para exibir/ocultar no gráfico:
+          Clique no órgão para exibir/ocultar no gráfico <span className="text-zinc-400 font-normal">(linhas tracejadas indicam tabelas idênticas sobrepostas)</span>:
         </div>
         <div className="flex items-center gap-2 text-xs">
           <button
@@ -301,7 +317,7 @@ export default function ProgressionChart({
         {cargos.map((c, idx) => {
           const isVisible = visibleCargos.has(c.cargo);
           const isBase = c.cargo === baselineCargo;
-          const color = isBase ? '#2563eb' : CARGO_COLORS[(idx + 1) % CARGO_COLORS.length];
+          const color = getCargoColor(c.cargo, idx, baselineCargo);
 
           return (
             <button
@@ -309,12 +325,14 @@ export default function ProgressionChart({
               onClick={() => toggleCargo(c.cargo)}
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${
                 isVisible
-                  ? 'bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-300 dark:border-zinc-700 shadow-xs'
+                  ? isBase
+                    ? 'bg-blue-50/70 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200 border-blue-300 dark:border-blue-800 shadow-xs'
+                    : 'bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-300 dark:border-zinc-700 shadow-xs'
                   : 'bg-zinc-100 dark:bg-zinc-900/40 text-zinc-400 border-transparent opacity-60'
               }`}
             >
               <span
-                className="w-2 h-2 rounded-full"
+                className="w-2.5 h-2.5 rounded-full shrink-0"
                 style={{ backgroundColor: isVisible ? color : '#a1a1aa' }}
               />
               <span>{c.orgao}</span>
@@ -329,7 +347,7 @@ export default function ProgressionChart({
       </div>
 
       {/* Gráfico ECharts */}
-      <div className="mt-2 w-full h-[400px]">
+      <div className="mt-2 w-full h-[420px]">
         <ReactECharts
           option={chartOption}
           style={{ height: '100%', width: '100%' }}
