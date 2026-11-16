@@ -33,7 +33,7 @@ export default function ExportToolbar({ metadata, dataset }) {
 
   const handleCopyClipboard = () => {
     if (!dataset || !dataset.cargos) return;
-    let text = `TABELA COMPARATIVA DE SALÁRIOS - ANALISTAS 40H (GOVERNO DE MT / SEPLAG)\n`;
+    let text = `TABELA COMPARATIVA DE SALÁRIOS - ANALISTAS 40H (GOVERNO DE MT)\n`;
     text += `Período: 01/01/2026 - ATUAL\n\n`;
     dataset.cargos.forEach(c => {
       text += `- ${c.orgao} (${c.cargo}): Piso Inicial R$ ${c.piso_inicial.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} | Teto R$ ${c.teto_final.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
@@ -93,9 +93,9 @@ export default function ExportToolbar({ metadata, dataset }) {
         {/* Metadados da Coleta */}
         <div className="p-3.5 rounded-lg bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 space-y-1.5 text-zinc-600 dark:text-zinc-400">
           <div className="font-semibold text-zinc-900 dark:text-zinc-200 flex items-center gap-1.5">
-            Fonte Oficial:
+            Fonte Oficial dos Dados:
           </div>
-          <div>Portal do Servidor — SEPLAG Mato Grosso</div>
+          <div>Portal do Servidor (SEPLAG MT)</div>
           <div className="font-mono text-[11px] text-zinc-500 truncate">
             {metadata?.url || 'https://servicos.seplag.mt.gov.br/portalservidor/publico/tabela-salarial'}
           </div>

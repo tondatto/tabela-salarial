@@ -75,7 +75,7 @@ export default function App() {
               <span className="font-semibold text-zinc-900 dark:text-zinc-100">
                 Comparativo de Isonomia Salarial entre 10 Carreiras de Analista (40 Horas):
               </span>{' '}
-              Governo de Mato Grosso (SEPLAG MT). Cargo base ativo:{' '}
+              Poder Executivo de Mato Grosso. Cargo base ativo:{' '}
               <strong className="text-blue-600 dark:text-blue-400 font-mono">
                 {cargos.find(c => c.cargo === baselineCargo)?.orgao || baselineCargo}
               </strong>.
@@ -184,7 +184,7 @@ export default function App() {
       <footer className="border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#0c0c0f] py-4 mt-8 transition-colors">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-zinc-500 dark:text-zinc-400">
           <div>
-            Painel Analítico de Remuneração dos Servidores Públicos de Mato Grosso • Fonte: SEPLAG MT
+            Painel Analítico de Remuneração dos Servidores Públicos de Mato Grosso • Fonte dos dados: Portal do Servidor (SEPLAG MT)
           </div>
           <div className="flex items-center gap-3">
             <span>Vigência: 2026</span>

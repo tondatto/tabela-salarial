@@ -31,7 +31,7 @@ export default function Header({
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-0.5 flex flex-wrap items-center gap-x-2">
-                <span>Governo do Estado de Mato Grosso — SEPLAG MT</span>
+                <span>Governo do Estado de Mato Grosso</span>
                 <span className="text-zinc-300 dark:text-zinc-700">•</span>
                 <span className="inline-flex items-center gap-1 font-mono text-zinc-600 dark:text-zinc-300">
                   <Calendar className="w-3.5 h-3.5" /> Vigência: 01/01/2026 - ATUAL
