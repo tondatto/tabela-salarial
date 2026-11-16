@@ -26,7 +26,7 @@ const TABS = [
   { id: 'progression', label: 'Curvas de Progressão', icon: LineChart },
   { id: 'comparator', label: 'Comparador Lado a Lado', icon: ArrowLeftRight },
   { id: 'matrix', label: 'Matriz Completa (4×12)', icon: TableIcon },
-  { id: 'export', label: 'Exportar / Atualizar', icon: Download },
+  { id: 'export', label: 'Exportação de Dados', icon: Download },
 ];
 
 export default function App() {
