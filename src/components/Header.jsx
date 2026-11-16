@@ -51,12 +51,12 @@ export default function Header({
               <select
                 value={baselineCargo}
                 onChange={(e) => setBaselineCargo(e.target.value)}
-                className="bg-transparent font-medium text-zinc-900 dark:text-zinc-100 focus:outline-none cursor-pointer max-w-[220px] sm:max-w-[280px] truncate"
+                className="bg-transparent font-medium text-zinc-900 dark:text-zinc-100 focus:outline-none cursor-pointer max-w-[240px] sm:max-w-[380px] md:max-w-[460px] truncate"
                 title="Selecione o cargo de referência para comparar deltas (R$ e %)"
               >
                 {cargos.map((c) => (
                   <option key={c.cargo} value={c.cargo} className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">
-                    {c.orgao} ({c.cargo.split(' ')[0]} {c.cargo.split(' ')[1] || ''})
+                    {c.orgao} ({c.cargo})
                   </option>
                 ))}
               </select>
