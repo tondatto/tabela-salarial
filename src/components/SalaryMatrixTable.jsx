@@ -95,9 +95,6 @@ export default function SalaryMatrixTable({
                     <div className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
                       Classe {c}
                     </div>
-                    <div className="text-[11px] font-normal text-zinc-500">
-                      {CLASSE_SHORT_LABELS[c]}
-                    </div>
                   </th>
                 ))}
               </tr>
@@ -157,7 +154,7 @@ export default function SalaryMatrixTable({
         </div>
         <div className="flex items-center gap-1">
           <span className="text-blue-600 dark:text-blue-400 font-bold font-mono">→ +X%</span>
-          <span>= Progressão vertical (titulação acadêmica)</span>
+          <span>= Progressão vertical entre classes</span>
         </div>
       </div>
 

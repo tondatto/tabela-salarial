@@ -4,10 +4,10 @@ import { formatBRL, formatDeltaBRL, formatPercent } from '../utils/formatters';
 import { BarChart3, Filter } from 'lucide-react';
 
 const STAGES = [
-  { id: 'A-1', label: 'Piso Inicial (A-1: Graduação)', classe: 'A', nivel: 1 },
-  { id: 'B-1', label: 'Início Pós-Graduação (B-1)', classe: 'B', nivel: 1 },
-  { id: 'C-1', label: 'Início Mestrado (C-1)', classe: 'C', nivel: 1 },
-  { id: 'D-1', label: 'Início Doutorado (D-1)', classe: 'D', nivel: 1 },
+  { id: 'A-1', label: 'Piso Inicial (Classe A)', classe: 'A', nivel: 1 },
+  { id: 'B-1', label: 'Início da Classe B (Nível 1)', classe: 'B', nivel: 1 },
+  { id: 'C-1', label: 'Início da Classe C (Nível 1)', classe: 'C', nivel: 1 },
+  { id: 'D-1', label: 'Início da Classe D (Nível 1)', classe: 'D', nivel: 1 },
   { id: 'TETO', label: 'Teto Final da Carreira (Último Nível)', isTeto: true }
 ];
 
@@ -206,7 +206,7 @@ export default function RankingChart({
                   : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
               }`}
             >
-              {s.id === 'A-1' ? 'Piso (A-1)' : s.id === 'B-1' ? 'Pós (B-1)' : s.id === 'C-1' ? 'Mestrado (C-1)' : s.id === 'D-1' ? 'Doutorado (D-1)' : 'Teto Final'}
+              {s.id === 'A-1' ? 'Piso (Classe A)' : s.id === 'B-1' ? 'Início Classe B' : s.id === 'C-1' ? 'Início Classe C' : s.id === 'D-1' ? 'Início Classe D' : 'Teto Final'}
             </button>
           ))}
         </div>

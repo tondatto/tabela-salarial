@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import ReactECharts from 'echarts-for-react';
 import { 
   ArrowLeftRight, 
   Scale, 
@@ -6,7 +7,9 @@ import {
   TrendingDown, 
   AlertCircle,
   CheckCircle,
-  FileSpreadsheet
+  FileSpreadsheet,
+  ScatterChart as ScatterIcon,
+  HelpCircle
 } from 'lucide-react';
 import { compareCargos } from '../utils/salaryData';
 import { formatBRL, formatDeltaBRL, formatPercent, CLASSE_LABELS } from '../utils/formatters';
@@ -14,15 +17,16 @@ import { formatBRL, formatDeltaBRL, formatPercent, CLASSE_LABELS } from '../util
 export default function SideBySideCompare({
   cargos = [],
   registros = [],
-  baselineCargo
+  baselineCargo,
+  isDarkMode
 }) {
   const [cargo1, setCargo1] = useState(baselineCargo || cargos[0]?.cargo);
   const [cargo2, setCargo2] = useState(() => {
-    // Pegar o segundo cargo diferente da base
     const other = cargos.find(c => c.cargo !== baselineCargo);
     return other ? other.cargo : cargos[1]?.cargo || cargos[0]?.cargo;
   });
   const [filterClasse, setFilterClasse] = useState('ALL');
+  const [scatterMode, setScatterMode] = useState('parity'); // 'parity' | 'delta'
 
   const c1Obj = cargos.find(c => c.cargo === cargo1);
   const c2Obj = cargos.find(c => c.cargo === cargo2);
@@ -61,6 +65,225 @@ export default function SideBySideCompare({
       deltaTetoPct,
     };
   }, [c1Obj, c2Obj, cargo1, cargo2, registros]);
+
+  // Opções do Gráfico de Dispersão ECharts (responsivo ao filtro de classe)
+  const scatterOption = useMemo(() => {
+    const textColor = isDarkMode ? '#d4d4d8' : '#27272a';
+    const splitLineColor = isDarkMode ? '#27272a' : '#f4f4f5';
+
+    // Apenas registros válidos presentes em ambos
+    const validPairs = comparisons.filter(c => c.val1 !== null && c.val2 !== null);
+    if (validPairs.length === 0) return {};
+
+    if (scatterMode === 'parity') {
+      // Modo Paridade (X = Salário Cargo 1, Y = Salário Cargo 2)
+      const allVals = validPairs.flatMap(c => [c.val1, c.val2]);
+      const minVal = Math.floor(Math.min(...allVals) * 0.95);
+      const maxVal = Math.ceil(Math.max(...allVals) * 1.05);
+
+      const scatterData = validPairs.map(c => {
+        const isHigher = c.val2 > c.val1;
+        const isLower = c.val2 < c.val1;
+        const color = isHigher ? '#10b981' : isLower ? '#f43f5e' : '#64748b';
+
+        return {
+          value: [c.val1, c.val2],
+          itemStyle: {
+            color: color,
+            borderColor: isDarkMode ? '#18181b' : '#ffffff',
+            borderWidth: 1.5,
+            shadowBlur: 4,
+            shadowColor: 'rgba(0, 0, 0, 0.2)'
+          },
+          raw: c
+        };
+      });
+
+      return {
+        tooltip: {
+          trigger: 'item',
+          backgroundColor: isDarkMode ? '#18181b' : '#ffffff',
+          borderColor: isDarkMode ? '#3f3f46' : '#e4e4e7',
+          textStyle: { color: isDarkMode ? '#fafafa' : '#09090b', fontFamily: 'JetBrains Mono' },
+          formatter: (params) => {
+            const raw = params.data.raw;
+            const diffColor = raw.deltaBRL >= 0 ? '#10b981' : '#f43f5e';
+            return `
+              <div class="p-1">
+                <div class="font-bold font-sans text-sm pb-1 mb-1 border-b border-zinc-200 dark:border-zinc-700">
+                  Referência: <span class="font-mono text-blue-500">${raw.key}</span> (${raw.classe}-${raw.nivel})
+                </div>
+                <div class="text-xs py-0.5">
+                  <span class="font-sans text-zinc-400">${c1Obj?.orgao}:</span> 
+                  <strong class="font-mono text-zinc-900 dark:text-zinc-100">${formatBRL(raw.val1)}</strong>
+                </div>
+                <div class="text-xs py-0.5">
+                  <span class="font-sans text-zinc-400">${c2Obj?.orgao}:</span> 
+                  <strong class="font-mono text-zinc-900 dark:text-zinc-100">${formatBRL(raw.val2)}</strong>
+                </div>
+                <div class="mt-1 pt-1 border-t border-zinc-200 dark:border-zinc-700 text-xs font-sans">
+                  Diferença: <strong style="color: ${diffColor}; font-family: JetBrains Mono;">${formatDeltaBRL(raw.deltaBRL)} (${formatPercent(raw.deltaPct)})</strong>
+                </div>
+              </div>
+            `;
+          }
+        },
+        grid: {
+          left: '5%',
+          right: '5%',
+          bottom: '10%',
+          top: '8%',
+          containLabel: true
+        },
+        xAxis: {
+          type: 'value',
+          name: `${c1Obj?.orgao} (R$)`,
+          nameLocation: 'middle',
+          nameGap: 30,
+          nameTextStyle: { color: textColor, fontSize: 11, fontWeight: 600, fontFamily: 'DM Sans' },
+          min: minVal,
+          max: maxVal,
+          axisLabel: {
+            color: textColor,
+            fontFamily: 'JetBrains Mono',
+            fontSize: 11,
+            formatter: (v) => `R$ ${(v / 1000).toFixed(0)}k`
+          },
+          splitLine: { lineStyle: { color: splitLineColor } }
+        },
+        yAxis: {
+          type: 'value',
+          name: `${c2Obj?.orgao} (R$)`,
+          nameLocation: 'middle',
+          nameGap: 45,
+          nameTextStyle: { color: textColor, fontSize: 11, fontWeight: 600, fontFamily: 'DM Sans' },
+          min: minVal,
+          max: maxVal,
+          axisLabel: {
+            color: textColor,
+            fontFamily: 'JetBrains Mono',
+            fontSize: 11,
+            formatter: (v) => `R$ ${(v / 1000).toFixed(0)}k`
+          },
+          splitLine: { lineStyle: { color: splitLineColor } }
+        },
+        series: [
+          {
+            type: 'scatter',
+            symbolSize: 12,
+            data: scatterData,
+            markLine: {
+              silent: true,
+              symbol: 'none',
+              lineStyle: {
+                color: isDarkMode ? '#3b82f6' : '#2563eb',
+                type: 'dashed',
+                width: 2,
+                opacity: 0.7
+              },
+              data: [
+                [
+                  { coord: [minVal, minVal] },
+                  { coord: [maxVal, maxVal] }
+                ]
+              ],
+              label: {
+                formatter: 'Linha de Isonomia (45°)',
+                position: 'insideEndTop',
+                color: isDarkMode ? '#93c5fd' : '#1d4ed8',
+                fontSize: 10,
+                fontFamily: 'DM Sans'
+              }
+            }
+          }
+        ]
+      };
+    } else {
+      // Modo Delta (X = Referência, Y = Diferença em R$)
+      const xLabels = validPairs.map(c => c.key);
+      const deltaData = validPairs.map(c => ({
+        value: c.deltaBRL,
+        itemStyle: {
+          color: c.deltaBRL >= 0 ? '#10b981' : '#f43f5e',
+          borderColor: isDarkMode ? '#18181b' : '#ffffff',
+          borderWidth: 1.5
+        },
+        raw: c
+      }));
+
+      return {
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: { type: 'shadow' },
+          backgroundColor: isDarkMode ? '#18181b' : '#ffffff',
+          borderColor: isDarkMode ? '#3f3f46' : '#e4e4e7',
+          textStyle: { color: isDarkMode ? '#fafafa' : '#09090b', fontFamily: 'JetBrains Mono' },
+          formatter: (params) => {
+            const p = params[0];
+            const raw = p.data.raw;
+            const diffColor = raw.deltaBRL >= 0 ? '#10b981' : '#f43f5e';
+            return `
+              <div class="p-1">
+                <div class="font-bold font-sans text-sm pb-1 mb-1 border-b border-zinc-200 dark:border-zinc-700">
+                  Step: <span class="font-mono text-blue-500">${raw.key}</span>
+                </div>
+                <div class="text-xs py-0.5">
+                  <span class="font-sans text-zinc-400">${c1Obj?.orgao}:</span> <strong>${formatBRL(raw.val1)}</strong>
+                </div>
+                <div class="text-xs py-0.5">
+                  <span class="font-sans text-zinc-400">${c2Obj?.orgao}:</span> <strong>${formatBRL(raw.val2)}</strong>
+                </div>
+                <div class="mt-1 pt-1 border-t border-zinc-200 dark:border-zinc-700 text-xs font-sans">
+                  Diferença: <strong style="color: ${diffColor}; font-family: JetBrains Mono;">${formatDeltaBRL(raw.deltaBRL)} (${formatPercent(raw.deltaPct)})</strong>
+                </div>
+              </div>
+            `;
+          }
+        },
+        grid: {
+          left: '4%',
+          right: '4%',
+          bottom: '8%',
+          top: '8%',
+          containLabel: true
+        },
+        xAxis: {
+          type: 'category',
+          data: xLabels,
+          axisLabel: {
+            color: textColor,
+            fontFamily: 'JetBrains Mono',
+            fontSize: 10,
+            interval: 0,
+            rotate: validPairs.length > 20 ? 45 : 0
+          },
+          axisLine: { lineStyle: { color: isDarkMode ? '#3f3f46' : '#e4e4e7' } }
+        },
+        yAxis: {
+          type: 'value',
+          axisLabel: {
+            color: textColor,
+            fontFamily: 'JetBrains Mono',
+            fontSize: 11,
+            formatter: (v) => `${formatDeltaBRL(v)}`
+          },
+          splitLine: { lineStyle: { color: splitLineColor } }
+        },
+        series: [
+          {
+            type: 'scatter',
+            symbolSize: 10,
+            data: deltaData,
+            markLine: {
+              silent: true,
+              data: [{ yAxis: 0 }],
+              lineStyle: { color: isDarkMode ? '#71717a' : '#a1a1aa', type: 'dashed' }
+            }
+          }
+        ]
+      };
+    }
+  }, [comparisons, scatterMode, c1Obj, c2Obj, isDarkMode]);
 
   return (
     <div className="bg-white dark:bg-[#0c0c0f] border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm space-y-6">
@@ -236,7 +459,7 @@ export default function SideBySideCompare({
 
       {/* Tabela de Comparação */}
       <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-xs">
-        <div className="overflow-x-auto max-h-[460px]">
+        <div className="overflow-x-auto max-h-[420px]">
           <table className="w-full text-left border-collapse text-xs">
             <thead className="bg-zinc-100 dark:bg-zinc-900 sticky top-0 z-10 text-zinc-600 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-800 font-semibold">
               <tr>
@@ -255,8 +478,6 @@ export default function SideBySideCompare({
                 const hasBoth = c.val1 !== null && c.val2 !== null;
                 const isPositive = c.deltaBRL > 0;
                 const isNegative = c.deltaBRL < 0;
-
-                // Barra proporcional de -50% a +50%
                 const pctClamped = c.deltaPct !== null ? Math.max(-50, Math.min(50, c.deltaPct)) : 0;
 
                 return (
@@ -315,6 +536,83 @@ export default function SideBySideCompare({
               })}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* NOVO: Gráfico de Dispersão Responsivo aos Filtros */}
+      <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800/80 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900/60">
+              <ScatterIcon className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-zinc-950 dark:text-zinc-50 flex items-center gap-2">
+                Gráfico de Dispersão Salarial
+                <span className="text-[11px] font-normal text-zinc-400">
+                  ({filterClasse === 'ALL' ? 'Todas as Classes' : `Classe ${filterClasse}`})
+                </span>
+              </h3>
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                {scatterMode === 'parity' 
+                  ? 'Dispersão de paridade: pontos na linha tracejada representam isonomia salarial exata'
+                  : 'Dispersão de delta em R$ ao longo das referências da carreira'
+                }
+              </p>
+            </div>
+          </div>
+
+          {/* Alternador do Modo de Dispersão */}
+          <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800/80 p-1 rounded-lg self-start sm:self-auto">
+            <button
+              onClick={() => setScatterMode('parity')}
+              className={`px-2.5 py-1 text-xs rounded-md font-medium transition-all ${
+                scatterMode === 'parity'
+                  ? 'bg-white dark:bg-zinc-900 text-zinc-950 dark:text-zinc-50 shadow-xs font-semibold'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
+              }`}
+            >
+              Paridade (X vs Y)
+            </button>
+            <button
+              onClick={() => setScatterMode('delta')}
+              className={`px-2.5 py-1 text-xs rounded-md font-medium transition-all ${
+                scatterMode === 'delta'
+                  ? 'bg-white dark:bg-zinc-900 text-zinc-950 dark:text-zinc-50 shadow-xs font-semibold'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
+              }`}
+            >
+              Delta (R$) por Step
+            </button>
+          </div>
+        </div>
+
+        {/* Legenda do Gráfico de Dispersão */}
+        {scatterMode === 'parity' && (
+          <div className="flex flex-wrap items-center justify-end gap-4 text-xs text-zinc-500 dark:text-zinc-400 pt-1">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <span>{c2Obj?.orgao} maior</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+              <span>{c1Obj?.orgao} maior</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-4 border-b-2 border-dashed border-blue-500"></span>
+              <span>Linha de 45° (Isonomia)</span>
+            </div>
+          </div>
+        )}
+
+        {/* Componente ECharts */}
+        <div className="w-full h-[360px] bg-zinc-50/40 dark:bg-zinc-900/30 rounded-xl border border-zinc-200 dark:border-zinc-800 p-2">
+          <ReactECharts
+            option={scatterOption}
+            style={{ height: '100%', width: '100%' }}
+            notMerge={true}
+            lazyUpdate={true}
+          />
         </div>
       </div>
 

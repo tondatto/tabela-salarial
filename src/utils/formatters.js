@@ -21,15 +21,15 @@ export const formatDeltaBRL = (val) => {
 };
 
 export const CLASSE_LABELS = {
-  A: 'Classe A (Graduação)',
-  B: 'Classe B (Especialização / Pós)',
-  C: 'Classe C (Mestrado)',
-  D: 'Classe D (Doutorado)'
+  A: 'Classe A',
+  B: 'Classe B',
+  C: 'Classe C',
+  D: 'Classe D'
 };
 
 export const CLASSE_SHORT_LABELS = {
-  A: 'Graduação',
-  B: 'Especialização',
-  C: 'Mestrado',
-  D: 'Doutorado'
+  A: 'Classe A',
+  B: 'Classe B',
+  C: 'Classe C',
+  D: 'Classe D'
 };

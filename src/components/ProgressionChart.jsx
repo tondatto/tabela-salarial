@@ -1,14 +1,20 @@
 import React, { useState, useMemo } from 'react';
 import ReactECharts from 'echarts-for-react';
-import { formatBRL } from '../utils/formatters';
-import { LineChart, Layers, Eye, EyeOff } from 'lucide-react';
+import { formatBRL, formatPercent } from '../utils/formatters';
+import { LineChart, Layers, Eye, EyeOff, SlidersHorizontal } from 'lucide-react';
 
 const CLASSES = [
-  { id: 'A', label: 'Classe A (Graduação)' },
-  { id: 'B', label: 'Classe B (Especialização)' },
-  { id: 'C', label: 'Classe C (Mestrado)' },
-  { id: 'D', label: 'Classe D (Doutorado)' },
-  { id: 'ALL', label: 'Trajetória Contínua (Todos os 48 Steps)' }
+  { id: 'A', label: 'Classe A' },
+  { id: 'B', label: 'Classe B' },
+  { id: 'C', label: 'Classe C' },
+  { id: 'D', label: 'Classe D' },
+  { id: 'ALL', label: 'Trajetória Contínua' }
+];
+
+const VIEW_MODES = [
+  { id: 'levels', label: 'Evolução por Níveis (1 a 12)' },
+  { id: 'class_initial', label: 'Valor Inicial de cada Classe' },
+  { id: 'class_final', label: 'Valor Final de cada Classe' }
 ];
 
 // Paleta de cores para os 10 cargos
@@ -31,9 +37,9 @@ export default function ProgressionChart({
   baselineCargo,
   isDarkMode
 }) {
+  const [viewMode, setViewMode] = useState('levels'); // 'levels' | 'class_initial' | 'class_final'
   const [selectedClasse, setSelectedClasse] = useState('A');
   const [visibleCargos, setVisibleCargos] = useState(() => {
-    // Por padrão todos visíveis
     return new Set(cargos.map(c => c.cargo));
   });
 
@@ -62,7 +68,11 @@ export default function ProgressionChart({
     const splitLineColor = isDarkMode ? '#27272a' : '#f4f4f5';
 
     let xAxisData = [];
-    if (selectedClasse === 'ALL') {
+    if (viewMode === 'class_initial') {
+      xAxisData = ['Classe A (Inicial)', 'Classe B (Inicial)', 'Classe C (Inicial)', 'Classe D (Inicial)'];
+    } else if (viewMode === 'class_final') {
+      xAxisData = ['Classe A (Final)', 'Classe B (Final)', 'Classe C (Final)', 'Classe D (Final)'];
+    } else if (selectedClasse === 'ALL') {
       xAxisData = [
         'A-1', 'A-3', 'A-6', 'A-9', 'A-12',
         'B-1', 'B-3', 'B-6', 'B-9', 'B-12',
@@ -80,7 +90,23 @@ export default function ProgressionChart({
 
       let dataPoints = [];
 
-      if (selectedClasse === 'ALL') {
+      if (viewMode === 'class_initial') {
+        // Nível 1 de cada classe
+        const classes = ['A', 'B', 'C', 'D'];
+        dataPoints = classes.map(cls => {
+          const rec = registros.find(r => r.cargo === c.cargo && r.classe === cls && r.nivel === 1);
+          return rec ? rec.valor : null;
+        });
+      } else if (viewMode === 'class_final') {
+        // Último nível de cada classe
+        const classes = ['A', 'B', 'C', 'D'];
+        dataPoints = classes.map(cls => {
+          const cRecords = registros.filter(r => r.cargo === c.cargo && r.classe === cls);
+          if (!cRecords || cRecords.length === 0) return null;
+          const maxRec = cRecords.reduce((prev, curr) => (curr.nivel > prev.nivel ? curr : prev), cRecords[0]);
+          return maxRec ? maxRec.valor : null;
+        });
+      } else if (selectedClasse === 'ALL') {
         const cRecords = registros.filter(r => r.cargo === c.cargo);
         const map = new Map();
         cRecords.forEach(r => map.set(`${r.classe}-${r.nivel}`, r.valor));
@@ -105,7 +131,7 @@ export default function ProgressionChart({
         data: isVisible ? dataPoints : [],
         smooth: 0.25,
         symbol: isBase ? 'circle' : 'circle',
-        symbolSize: isBase ? 7 : 5,
+        symbolSize: isBase ? 8 : 6,
         lineStyle: {
           width: isBase ? 3.5 : 2,
           color: color,
@@ -129,12 +155,11 @@ export default function ProgressionChart({
           const axisValue = params[0].axisValue;
           let html = `<div class="font-bold font-sans text-sm pb-1 mb-1 border-b border-zinc-200 dark:border-zinc-700">${axisValue}</div>`;
           
-          // Ordenar do maior para o menor salário no ponto
           const sorted = [...params].filter(p => p.value !== null && p.value !== undefined)
             .sort((a, b) => b.value - a.value);
 
           sorted.forEach(p => {
-            const isBase = p.seriesName.includes('Área Meio') || p.seriesName.includes('Executivo');
+            const isBase = p.seriesName.includes('Área Meio');
             const fontBold = isBase ? 'font-bold' : '';
             html += `
               <div class="flex items-center justify-between gap-4 text-xs py-0.5">
@@ -178,10 +203,10 @@ export default function ProgressionChart({
       },
       series
     };
-  }, [cargos, registros, selectedClasse, visibleCargos, baselineCargo, isDarkMode]);
+  }, [cargos, registros, selectedClasse, viewMode, visibleCargos, baselineCargo, isDarkMode]);
 
   return (
-    <div className="bg-white dark:bg-[#0c0c0f] border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm">
+    <div className="bg-white dark:bg-[#0c0c0f] border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm space-y-4">
       
       {/* Cabeçalho */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-4 border-b border-zinc-100 dark:border-zinc-800/80">
@@ -194,34 +219,63 @@ export default function ProgressionChart({
               Curvas de Progressão Salarial
             </h2>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Evolução nos 12 níveis horizontais por titulação acadêmica
+              {viewMode === 'levels' 
+                ? 'Evolução horizontal nos 12 níveis por classe'
+                : viewMode === 'class_initial'
+                  ? 'Comparação dos valores iniciais (Nível 1) ao ingressar em cada classe'
+                  : 'Comparação dos valores finais (Teto) alcançados em cada classe'
+              }
             </p>
           </div>
         </div>
 
-        {/* Abas de Classe */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-xs text-zinc-400 dark:text-zinc-500 mr-1 flex items-center gap-1">
-            <Layers className="w-3.5 h-3.5" /> Classe:
-          </span>
-          {CLASSES.map((cls) => (
-            <button
-              key={cls.id}
-              onClick={() => setSelectedClasse(cls.id)}
-              className={`px-2.5 py-1 text-xs rounded-lg font-medium transition-all ${
-                selectedClasse === cls.id
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-              }`}
-            >
-              {cls.label}
-            </button>
-          ))}
+        {/* Controles de Modo & Filtro de Classe */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          
+          {/* Seletor de Modo de Visualização */}
+          <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800/80 p-1 rounded-lg">
+            {VIEW_MODES.map((mode) => (
+              <button
+                key={mode.id}
+                onClick={() => setViewMode(mode.id)}
+                className={`px-2.5 py-1 text-xs rounded-md font-medium transition-all ${
+                  viewMode === mode.id
+                    ? 'bg-white dark:bg-zinc-900 text-zinc-950 dark:text-zinc-50 shadow-xs font-semibold'
+                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
+                }`}
+              >
+                {mode.id === 'levels' ? 'Níveis (1 a 12)' : mode.id === 'class_initial' ? 'Inicial da Classe' : 'Final da Classe'}
+              </button>
+            ))}
+          </div>
+
+          {/* Seletor de Classe (ativo apenas no modo Níveis) */}
+          {viewMode === 'levels' && (
+            <div className="flex items-center gap-1 flex-wrap">
+              <span className="text-xs text-zinc-400 dark:text-zinc-500 mr-1 flex items-center gap-1">
+                <Layers className="w-3.5 h-3.5" />
+              </span>
+              {CLASSES.map((cls) => (
+                <button
+                  key={cls.id}
+                  onClick={() => setSelectedClasse(cls.id)}
+                  className={`px-2.5 py-1 text-xs rounded-lg font-medium transition-all ${
+                    selectedClasse === cls.id
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                  }`}
+                >
+                  {cls.label}
+                </button>
+              ))}
+            </div>
+          )}
+
         </div>
       </div>
 
       {/* Controles de Filtro de Cargos na Legenda */}
-      <div className="mt-4 pt-1 flex flex-wrap items-center justify-between gap-2">
+      <div className="pt-1 flex flex-wrap items-center justify-between gap-2">
         <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
           Clique no órgão para exibir/ocultar no gráfico:
         </div>
@@ -243,7 +297,7 @@ export default function ProgressionChart({
       </div>
 
       {/* Pills dos Cargos */}
-      <div className="flex flex-wrap gap-1.5 mt-2">
+      <div className="flex flex-wrap gap-1.5">
         {cargos.map((c, idx) => {
           const isVisible = visibleCargos.has(c.cargo);
           const isBase = c.cargo === baselineCargo;
@@ -275,7 +329,7 @@ export default function ProgressionChart({
       </div>
 
       {/* Gráfico ECharts */}
-      <div className="mt-4 w-full h-[400px]">
+      <div className="mt-2 w-full h-[400px]">
         <ReactECharts
           option={chartOption}
           style={{ height: '100%', width: '100%' }}

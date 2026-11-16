@@ -22,14 +22,14 @@ HEADERS = {
 
 # Mapeamento amigável de órgãos / carreiras
 ORGAO_MAP = {
-    "Profissionais da Area Meio do Poder Executivo Estadual": "Poder Executivo (Área Meio)",
-    "Profissionais de Meio Ambiente": "SEMA (Meio Ambiente)",
+    "Profissionais da Area Meio do Poder Executivo Estadual": "Área Meio (Poder Executivo)",
+    "Profissionais do Meio Ambiente": "SEMA (Meio Ambiente)",
     "Profissionais do Instituto de Defesa Agropecuario": "INDEA (Defesa Agropecuária)",
     "Profissionais do Instituto de Terras de Mato Grosso": "INTERMAT (Terras)",
     "Profissionais Analistas Reguladores": "AGER (Agência Reguladora)",
     "Prof.do Quadro Administrativo da Proc. Geral do Estado": "PGE (Procuradoria Geral)",
     "Prof. do Sistema Nacional de Transito de MT": "DETRAN (Trânsito)",
-    "Profissionais de Desenvolvimento Econômico e Social": "SEDEC (Desenv. Econômico)",
+    "Profissionais de Desenvolvimento Econômico e Social": "Desenv. Econômico",
     "Profissionais do Sistema Sócio Educativo": "Socioeducativo",
     "Profissionais de Metrologia e Qualidade Industrial": "IPEM (Metrologia)"
 }

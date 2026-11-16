@@ -158,6 +158,7 @@ export default function App() {
               cargos={cargos}
               registros={registros}
               baselineCargo={baselineCargo}
+              isDarkMode={isDarkMode}
             />
           )}
 

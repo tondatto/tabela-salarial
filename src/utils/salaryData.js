@@ -40,8 +40,8 @@ export function computeSummaryMetrics(cargos, registros) {
     ? ((maxTeto.valor - minTeto.valor) / minTeto.valor) * 100 
     : 0;
 
-  // Ganhos médios por titulação (A->B, B->C, C->D no nível 1)
-  const titulacaoGains = cargos.map(c => {
+  // Ganhos médios por progressão de classe (A->B, B->C, C->D no nível 1)
+  const classProgressionGains = cargos.map(c => {
     const rA = registros.find(r => r.cargo === c.cargo && r.classe === 'A' && r.nivel === 1);
     const rB = registros.find(r => r.cargo === c.cargo && r.classe === 'B' && r.nivel === 1);
     const rC = registros.find(r => r.cargo === c.cargo && r.classe === 'C' && r.nivel === 1);
@@ -55,10 +55,10 @@ export function computeSummaryMetrics(cargos, registros) {
     return { cargo: c.cargo, orgao: c.orgao, gainAB, gainBC, gainCD, gainTotalAD };
   });
 
-  const avgGainAB = titulacaoGains.reduce((acc, t) => acc + t.gainAB, 0) / titulacaoGains.length;
-  const avgGainBC = titulacaoGains.reduce((acc, t) => acc + t.gainBC, 0) / titulacaoGains.length;
-  const avgGainCD = titulacaoGains.reduce((acc, t) => acc + t.gainCD, 0) / titulacaoGains.length;
-  const avgGainTotalAD = titulacaoGains.reduce((acc, t) => acc + t.gainTotalAD, 0) / titulacaoGains.length;
+  const avgGainAB = classProgressionGains.reduce((acc, t) => acc + t.gainAB, 0) / classProgressionGains.length;
+  const avgGainBC = classProgressionGains.reduce((acc, t) => acc + t.gainBC, 0) / classProgressionGains.length;
+  const avgGainCD = classProgressionGains.reduce((acc, t) => acc + t.gainCD, 0) / classProgressionGains.length;
+  const avgGainTotalAD = classProgressionGains.reduce((acc, t) => acc + t.gainTotalAD, 0) / classProgressionGains.length;
 
   return {
     totalCargos: cargos.length,
@@ -74,7 +74,7 @@ export function computeSummaryMetrics(cargos, registros) {
     avgGainBC,
     avgGainCD,
     avgGainTotalAD,
-    titulacaoGains
+    classProgressionGains
   };
 }
 
